@@ -1,0 +1,40 @@
+name: Upload Code to S3
+
+# Trigger workflow on push to main (you can change this to any branch you prefer)
+on:
+  push:
+    branches:
+      - main  # or 'master' or any other branch you prefer
+
+jobs:
+  upload-to-s3:
+    runs-on: ubuntu-latest  # This will run on the latest Ubuntu runner
+
+    steps:
+    # Step 1: Checkout repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 1  # This makes sure we only pull the latest commit
+
+    # Step 2: Set up AWS CLI for interacting with S3 (optional but helpful)
+    - name: Set up AWS CLI
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    # Step 3: Sync/upload files to S3 bucket
+    - name: Upload to S3
+      run: |
+        # Specify your bucket and folder path
+        BUCKET_NAME="your-bucket-name"
+        FOLDER_PATH="your-folder-name"  # If you want files in a specific folder in S3
+
+        # Sync all files in your repo to S3
+        aws s3 sync . s3://$BUCKET_NAME/$FOLDER_PATH --exclude ".git/*" --exclude ".github/*"
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION }}
