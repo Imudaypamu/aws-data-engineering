@@ -1,23 +1,24 @@
 name: Upload Code to S3
 
-# Trigger workflow on push to main (you can change this to any branch you prefer)
+# Trigger workflow on push to the main branch and manually via GitHub UI
 on:
   push:
     branches:
-      - main  # or 'master' or any other branch you prefer
+      - main  # You can change this to other branches (e.g., 'dev') as needed
+  workflow_dispatch:  # Allows manual triggering via GitHub UI
 
 jobs:
   upload-to-s3:
-    runs-on: ubuntu-latest  # This will run on the latest Ubuntu runner
+    runs-on: ubuntu-latest  # Using the latest Ubuntu runner
 
     steps:
-    # Step 1: Checkout repository
+    # Step 1: Checkout the repository
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        fetch-depth: 1  # This makes sure we only pull the latest commit
+        fetch-depth: 1  # Only fetch the latest commit to speed up the process
 
-    # Step 2: Set up AWS CLI for interacting with S3 (optional but helpful)
+    # Step 2: Set up AWS credentials
     - name: Set up AWS CLI
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -25,16 +26,12 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # Step 3: Sync/upload files to S3 bucket
+    # Step 3: Sync repository files to S3
     - name: Upload to S3
       run: |
-        # Specify your bucket and folder path
+        # Specify your bucket name and folder path (change these as per your setup)
         BUCKET_NAME="your-bucket-name"
-        FOLDER_PATH="your-folder-name"  # If you want files in a specific folder in S3
+        FOLDER_PATH="your-folder-name"  # Leave blank for the root of the bucket
 
-        # Sync all files in your repo to S3
+        # Sync all files in the repo to S3
         aws s3 sync . s3://$BUCKET_NAME/$FOLDER_PATH --exclude ".git/*" --exclude ".github/*"
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_REGION: ${{ secrets.AWS_REGION }}
